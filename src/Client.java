@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -84,11 +85,15 @@ public class Client implements Runnable
 					new OutputStreamWriter(s1.getOutputStream()));
 
 		}
+		catch(SocketException se) {
+			se.printStackTrace();
+		}
 		catch (IOException e)
 		{
 			e.printStackTrace();
 			System.err.print("IO Exception");
 		}
+		
 
 		System.out.println("Client Address : " + this.host);
 		//listen For Server Input and open Thread for Output to Server
@@ -169,7 +174,7 @@ public class Client implements Runnable
 	{
 		if (timer != null)
 		{
-			System.out.println("Remaining:" + timer.getDuration());
+			System.out.println("Remaining:" + timer.getDuration() + " seconds till the race will start! Register now");
 		}
 	}
 
@@ -201,9 +206,8 @@ public class Client implements Runnable
 	 */
 	private void sendToServer()
 	{
-		sendToServer = new SendToServer();
-		Thread sendToServerThread = new Thread(sendToServer);
-		sendToServerThread.start();
+		sendToServer = new SendToServer();		
+		sendToServer.startUpSend();
 	}
 
 	
@@ -215,13 +219,15 @@ public class Client implements Runnable
 	 *
 	 */
 	// TODO: runnable rausnehmen! geht auch ohne!!!
-	private class SendToServer implements Runnable
-	{
+	private class SendToServer
+	{		
+		
+		String askForCar = "Bitte geben Sie ihren Namen ein ( Enter quit to end \n"
+				+ " info to get info \n new to to register a new Line Up \n old to take the old Line Up):";
 
-		@Override
-		public void run()
+		public void startUpSend()
 		{
-			String askForCar = "Bitte geben Sie ihren Namen ein ( Enter quit to end \n"
+			askForCar = "Bitte geben Sie ihren Namen ein ( Enter quit to end \n"
 					+ " info to get info \n new to to register a new Line Up \n old to take the old Line Up):";
 
 			System.out.println(askForCar);
@@ -271,8 +277,10 @@ public class Client implements Runnable
 					os.newLine();
 					os.flush();
 					showCountDown();
-					System.out.println(
-							"Bitte geben Sie ihren Namen ein ( Enter QUIT to end INFO to get Info):");
+					System.out.println(askForCar);
+				}
+				catch(SocketException se) {
+					se.printStackTrace();
 				}
 				catch (IOException e)
 				{					
@@ -282,8 +290,9 @@ public class Client implements Runnable
 			}
 			else
 			{
-				System.out.println(
-						"Bitte geben Sie einen anderen Namen ein (Der von Ihnen gewählte Name ist schon vergeben!( Enter QUIT to end INFO to get Info):");
+				String otherName = "Bitte geben Sie einen anderen Auto Namen ein; Ihr eingegebener Name ist schon vorhanden!!\n";
+				askForCar += otherName;
+				System.out.println(askForCar);
 
 				showCountDown();
 
@@ -324,6 +333,9 @@ public class Client implements Runnable
 					s = is.readLine();
 
 				}
+			}
+			catch(SocketException se) {
+				se.printStackTrace();
 			}
 			catch (IOException e)
 			{
